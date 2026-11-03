@@ -33,4 +33,293 @@
         
         .header { text-align: center; padding: 15px; border-bottom: 2px solid var(--text-main); background: #000; position: sticky; top: 0; z-index: 10; }
         .header h1 { color: var(--text-main); font-size: 24px; font-family: 'Brush Script MT', cursive; letter-spacing: 2px; }
-        .staff
+        .staff-info { font-size: 14px; margin-top: 10px; color: #aaa; }
+        .staff-info span { color: var(--text-main); font-weight: bold; }
+        .staff-info a { color: #d9534f; text-decoration: none; margin-left: 10px; }
+        
+        .happy-hour { background: #8b0000; color: #fff; text-align: center; padding: 5px; font-size: 14px; font-weight: bold; margin: 10px; border-radius: 5px; border: 1px dashed var(--text-main); }
+        .input-group { padding: 0 10px; margin-bottom: 10px; }
+        .table-input { width: 100%; padding: 12px; background: #222; border: 1px solid var(--text-main); color: var(--text-main); font-size: 16px; border-radius: 8px; outline: none; margin-bottom: 5px; text-align: center;}
+        .table-input::placeholder { color: #888; }
+        
+        .category-title { color: var(--text-main); padding: 10px; background: #222; font-size: 18px; font-weight: bold; text-transform: uppercase; border-left: 4px solid var(--text-main); margin-top: 10px; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid var(--border-color); }
+        .item-info { flex: 1; }
+        .item-name { font-size: 16px; font-weight: bold; }
+        .item-price { color: var(--text-main); font-size: 14px; margin-top: 5px; }
+        
+        .quantity-control { display: flex; align-items: center; gap: 10px; }
+        .btn-qty { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--btn-bg); color: var(--text-light); font-size: 20px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-qty:active { background: var(--btn-active); color: #000; transform: scale(0.95); }
+        .qty-input { width: 40px; text-align: center; background: transparent; border: none; color: var(--text-light); font-size: 18px; font-weight: bold; padding: 5px; border-bottom: 1px solid var(--text-main); }
+        
+        .sticky-footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-top: 2px solid var(--text-main); z-index: 10; }
+        .total-price { color: var(--text-main); font-size: 20px; font-weight: bold; }
+        .action-buttons { display: flex; gap: 10px; }
+        .btn-action { padding: 12px 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .btn-clear { background: #d9534f; color: white; }
+        .btn-print { background: var(--text-main); color: #000; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; overflow-y: auto; padding: 20px; }
+        .modal-content { background: #fff; color: #000; max-width: 400px; margin: 0 auto; border-radius: 8px; overflow: hidden; padding-bottom: 20px; }
+        .bill-actions { display: flex; justify-content: space-around; padding: 15px; background: #222; }
+        #bill-container { padding: 20px; background: #fff; width: 100%; font-family: monospace; font-size: 14px; }
+        .bill-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <h2>Quên Đi Em</h2>
+            <p style="color: #ccc; margin-bottom: 20px; font-size: 14px;">Hệ Thống Quản Lý Đơn Hàng</p>
+            <input type="text" id="inputStaffName" class="table-input" placeholder="Tên nhân viên (Vd: Quang)">
+            <button class="btn-action btn-print" style="width: 100%; margin-top: 15px; padding: 15px;" onclick="login()">VÀO CA LÀM VIỆC</button>
+        </div>
+    </div>
+
+    <!-- ỨNG DỤNG POS -->
+    <div id="posApp" style="display: none;">
+        <div class="header">
+            <h1>Quên Đi Em</h1>
+            <div class="staff-info">Thu ngân: <span id="displayStaffName"></span> | <a href="#" onclick="logout()">Đổi tài khoản</a></div>
+        </div>
+
+        <div class="happy-hour">HAPPY HOUR (17:00 - 19:00): MUA 5 TẶNG 1 TIGER</div>
+
+        <div class="input-group" style="margin-top: 15px;">
+            <input type="text" id="tableName" class="table-input" placeholder="Tên Bàn / Số Bàn (Bắt buộc)">
+        </div>
+        <div class="input-group">
+            <input type="number" id="discountAmount" class="table-input" placeholder="Khuyến mãi / Giảm giá (VNĐ)" value="" onkeyup="calculateTotal()" onchange="calculateTotal()">
+        </div>
+
+        <div id="menu-container"></div>
+
+        <div class="sticky-footer">
+            <div class="total-price">Tổng: <span id="total-amount">0</span>K</div>
+            <div class="action-buttons">
+                <button class="btn-action btn-clear" onclick="clearAll()">Xóa hết</button>
+                <button class="btn-action btn-print" onclick="generateBill()">In Bill</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BILL -->
+    <div id="billModal" class="modal">
+        <div class="bill-actions">
+            <button class="btn-action btn-clear" onclick="closeModal()">Đóng</button>
+            <button class="btn-action btn-print" onclick="downloadBill()">Lưu Đơn & Tải Ảnh</button>
+        </div>
+        <div class="modal-content"><div id="bill-container"></div></div>
+    </div>
+
+    <script>
+        const menuData = [
+            {
+                category: "Đồ Uống",
+                items: [
+                    { id: 'tiger', name: 'Tiger', price: 25 }, { id: 'heineken', name: 'Heineken', price: 30 },
+                    { id: 'blanc1664', name: 'Blanc 1664', price: 30 }, { id: 'cashber', name: 'Cashber', price: 30 },
+                    { id: 'turborg', name: 'Turborg', price: 30 }, { id: 'huda', name: 'Huda', price: 25 },
+                    { id: 'sochu', name: 'Sochu', price: 110 }, { id: 'bohuc', name: 'Bò húc', price: 25 },
+                    { id: 'somersby', name: 'Somersby', price: 30 }
+                ]
+            },
+            {
+                category: "Khô Nướng",
+                items: [
+                    { id: 'khomuc', name: 'Khô mực nướng', price: 149 }, { id: 'khoduoi', name: 'Khô đuối nướng', price: 79 },
+                    { id: 'khochivang', name: 'Khô chỉ vàng nướng', price: 49 }, { id: 'khocamoi', name: 'Khô cá mối nướng', price: 49 },
+                    { id: 'khocabong', name: 'Khô cá bóng đường', price: 49 }, { id: 'khocabo', name: 'Khô cá bò nướng', price: 49 },
+                    { id: 'meckho', name: 'Mẹc khô', price: 199 }, { id: 'dauphong', name: 'Đậu phộng', price: 15 },
+                    { id: 'traicay', name: 'Trái cây dĩa', price: 49 }
+                ]
+            },
+            {
+                category: "Combo Nhậu",
+                items: [
+                    { id: 'combo1', name: 'Combo 1 (5 Bia + Mực)', price: 249 },
+                    { id: 'combo2', name: 'Combo 2 (5 Bia + Mẹc)', price: 299 },
+                    { id: 'combo3', name: 'Combo 3 (10 Bia + Mẹc + Trái cây)', price: 469 }
+                ]
+            }
+        ];
+
+        let order = {};
+        let currentStaff = "";
+        
+        // ĐƯỜNG LINK GOOGLE WEB APP ĐÃ ĐƯỢC CẬP NHẬT CHUẨN
+        const GOOGLE_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzGA09GSlZK-3r6zTAOPBn0215rBoTmIShyZXtWqs02I4_RxhbMnXqgkaW-DXybOrta/exec';
+
+        function checkLogin() {
+            let savedStaff = localStorage.getItem('quendiem_staff');
+            if (savedStaff) {
+                currentStaff = savedStaff;
+                document.getElementById('displayStaffName').innerText = currentStaff;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('posApp').style.display = 'block';
+                renderMenu();
+            }
+        }
+
+        function login() {
+            let name = document.getElementById('inputStaffName').value.trim();
+            if (!name) { alert("Vui lòng nhập tên nhân viên!"); return; }
+            localStorage.setItem('quendiem_staff', name);
+            checkLogin();
+        }
+
+        function logout() {
+            if(confirm("Bạn muốn thoát tài khoản nhân viên này?")) {
+                localStorage.removeItem('quendiem_staff');
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('posApp').style.display = 'none';
+                document.getElementById('inputStaffName').value = '';
+            }
+        }
+
+        function renderMenu() {
+            const container = document.getElementById('menu-container');
+            let html = '';
+            menuData.forEach(cat => {
+                html += `<div class="category-title">${cat.category}</div>`;
+                cat.items.forEach(item => {
+                    order[item.id] = 0;
+                    html += `
+                        <div class="menu-item">
+                            <div class="item-info">
+                                <div class="item-name">${item.name}</div>
+                                <div class="item-price">${item.price}K</div>
+                            </div>
+                            <div class="quantity-control">
+                                <button class="btn-qty" onclick="changeQty('${item.id}', -1)">-</button>
+                                <input type="number" id="qty-${item.id}" class="qty-input" value="0" min="0" onchange="manualInput('${item.id}')">
+                                <button class="btn-qty" onclick="changeQty('${item.id}', 1)">+</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+            container.innerHTML = html;
+        }
+
+        function changeQty(id, delta) {
+            let currentQty = parseInt(document.getElementById(`qty-${id}`).value) || 0;
+            let newQty = currentQty + delta;
+            if (newQty < 0) newQty = 0;
+            document.getElementById(`qty-${id}`).value = newQty;
+            order[id] = newQty;
+            calculateTotal();
+        }
+
+        function manualInput(id) {
+            let val = parseInt(document.getElementById(`qty-${id}`).value) || 0;
+            if (val < 0) { val = 0; document.getElementById(`qty-${id}`).value = 0; }
+            order[id] = val;
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            menuData.forEach(cat => { cat.items.forEach(item => { total += order[item.id] * item.price; }); });
+            let discountVND = parseInt(document.getElementById('discountAmount').value) || 0;
+            let discountK = discountVND / 1000;
+            let finalTotalK = total - discountK;
+            if(finalTotalK < 0) finalTotalK = 0;
+            document.getElementById('total-amount').innerText = finalTotalK.toLocaleString();
+            return { totalK: total, discountK: discountK, finalTotalK: finalTotalK };
+        }
+
+        function clearAll() {
+            if(confirm("Xóa trắng đơn hàng này?")) {
+                for (let id in order) { order[id] = 0; document.getElementById(`qty-${id}`).value = 0; }
+                document.getElementById('tableName').value = '';
+                document.getElementById('discountAmount').value = '';
+                calculateTotal();
+            }
+        }
+
+        function generateBill() {
+            const tableName = document.getElementById('tableName').value.trim();
+            if (!tableName) { alert("Vui lòng nhập Tên bàn!"); document.getElementById('tableName').focus(); return; }
+
+            const { totalK, discountK, finalTotalK } = calculateTotal();
+            if (totalK === 0) { alert("Chưa chọn món nào!"); return; }
+
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('vi-VN') + ' ' + now.toLocaleDateString('vi-VN');
+
+            let billHTML = `
+                <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+                    <h2 style="font-family: 'Brush Script MT', cursive; font-size: 24px;">Quên Đi Em</h2>
+                    <p>121 Đường số 52, An Khánh</p>
+                    <p>Ngày: ${timeString}</p>
+                    <p style="font-size: 18px; margin-top:5px;"><b>BÀN: ${tableName.toUpperCase()}</b></p>
+                    <p>NV: ${currentStaff}</p>
+                </div>
+                <div style="display: flex; font-weight: bold; border-bottom: 1px dashed #000; margin-bottom: 5px; padding-bottom: 5px;">
+                    <div style="flex: 2;">Tên món</div><div style="flex: 1; text-align: center;">SL</div><div style="flex: 1; text-align: right;">Tiền</div>
+                </div>
+            `;
+
+            menuData.forEach(cat => {
+                cat.items.forEach(item => {
+                    if (order[item.id] > 0) {
+                        billHTML += `<div class="bill-row"><div style="flex: 2;">${item.name}</div><div style="flex: 1; text-align: center;">${order[item.id]}</div><div style="flex: 1; text-align: right;">${order[item.id] * item.price}K</div></div>`;
+                    }
+                });
+            });
+
+            billHTML += `<div style="border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; font-weight: bold;">
+                <div class="bill-row"><span>Tạm tính:</span><span>${totalK.toLocaleString()},000đ</span></div>`;
+            
+            if(discountK > 0) billHTML += `<div class="bill-row" style="color: #d9534f;"><span>Giảm giá:</span><span>- ${(discountK * 1000).toLocaleString()}đ</span></div>`;
+
+            billHTML += `<div class="bill-row" style="font-size: 18px; margin-top: 5px;"><span>TỔNG CỘNG:</span><span>${finalTotalK.toLocaleString()},000đ</span></div></div>`;
+            document.getElementById('bill-container').innerHTML = billHTML;
+            document.getElementById('billModal').style.display = 'block';
+        }
+
+        function closeModal() { document.getElementById('billModal').style.display = 'none'; }
+
+        function downloadBill() {
+            html2canvas(document.getElementById('bill-container'), { backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Bill_${document.getElementById('tableName').value}_${new Date().getTime()}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+                
+                sendToGoogleSheets();
+                closeModal();
+                clearAll(); // Reset form sau khi thanh toán xong
+            });
+        }
+        
+        function sendToGoogleSheets() {
+            const now = new Date();
+            let itemsText = [];
+            menuData.forEach(cat => {
+                cat.items.forEach(item => { if (order[item.id] > 0) itemsText.push(`- ${item.name} (SL: ${order[item.id]})`); });
+            });
+            const { totalK, discountK, finalTotalK } = calculateTotal();
+            const payload = {
+                timestamp: now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN'),
+                staffName: currentStaff,
+                tableName: document.getElementById('tableName').value.trim(),
+                items: itemsText.join("\n"),
+                subTotal: totalK * 1000, discount: discountK * 1000, total: finalTotalK * 1000
+            };
+
+            fetch(GOOGLE_WEB_APP_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => console.log("Gửi thành công!")).catch(err => console.error('Lỗi:', err));
+        }
+
+        window.onload = checkLogin;
+    </script>
+</body>
+</html>
