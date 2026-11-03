@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Cấu hình để biến thành Web App trên điện thoại -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="mobile-web-app-capable" content="yes">
@@ -11,23 +10,11 @@
     <title>Quên Đi Em POS</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root {
-            --bg-color: #1a1a1a;
-            --text-main: #f0a500;
-            --text-light: #fff;
-            --border-color: #333;
-            --btn-bg: #333;
-            --btn-active: #f0a500;
-        }
+        :root { --bg-color: #1a1a1a; --text-main: #f0a500; --text-light: #fff; --border-color: #333; --btn-bg: #333; --btn-active: #f0a500; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-light); padding-bottom: 80px; user-select: none; }
         
-        /* Màn hình Đăng nhập */
-        #loginScreen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 999; display: flex;
-            align-items: center; justify-content: center; flex-direction: column;
-        }
+        #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .login-box { background: #222; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; border: 1px solid var(--text-main); }
         .login-box h2 { color: var(--text-main); font-family: 'Brush Script MT', cursive; font-size: 32px; margin-bottom: 20px; }
         
@@ -38,8 +25,8 @@
         .staff-info a { color: #d9534f; text-decoration: none; margin-left: 10px; }
         
         .happy-hour { background: #8b0000; color: #fff; text-align: center; padding: 5px; font-size: 14px; font-weight: bold; margin: 10px; border-radius: 5px; border: 1px dashed var(--text-main); }
-        .input-group { padding: 0 10px; margin-bottom: 10px; }
-        .table-input { width: 100%; padding: 12px; background: #222; border: 1px solid var(--text-main); color: var(--text-main); font-size: 16px; border-radius: 8px; outline: none; margin-bottom: 5px; text-align: center;}
+        .input-group { padding: 0 10px; margin-bottom: 10px; display: flex; gap: 10px; }
+        .table-input { flex: 1; width: 100%; padding: 12px; background: #222; border: 1px solid var(--text-main); color: var(--text-main); font-size: 16px; border-radius: 8px; outline: none; text-align: center;}
         .table-input::placeholder { color: #888; }
         
         .category-title { color: var(--text-main); padding: 10px; background: #222; font-size: 18px; font-weight: bold; text-transform: uppercase; border-left: 4px solid var(--text-main); margin-top: 10px; }
@@ -69,7 +56,7 @@
 </head>
 <body>
 
-    <!-- MÀN HÌNH ĐĂNG NHẬP -->
+    <!-- LOGIN -->
     <div id="loginScreen">
         <div class="login-box">
             <h2>Quên Đi Em</h2>
@@ -79,7 +66,7 @@
         </div>
     </div>
 
-    <!-- ỨNG DỤNG POS -->
+    <!-- MAIN APP -->
     <div id="posApp" style="display: none;">
         <div class="header">
             <h1>Quên Đi Em</h1>
@@ -91,8 +78,18 @@
         <div class="input-group" style="margin-top: 15px;">
             <input type="text" id="tableName" class="table-input" placeholder="Tên Bàn / Số Bàn (Bắt buộc)">
         </div>
+        
+        <!-- KHUNG CHỌN LOẠI KHUYẾN MÃI MỚI -->
         <div class="input-group">
-            <input type="number" id="discountAmount" class="table-input" placeholder="Khuyến mãi / Giảm giá (VNĐ)" value="" onkeyup="calculateTotal()" onchange="calculateTotal()">
+            <select id="discountType" class="table-input" style="font-size: 14px;" onchange="toggleDiscountInput(); calculateTotal()">
+                <option value="none">Không có khuyến mãi</option>
+                <option value="happy_hour">Happy Hour (Mua 5 Tặng 1 Tiger)</option>
+                <option value="percent_total">Giảm % Tổng Bill</option>
+                <option value="percent_food">Giảm % Món Ăn/Mẹc</option>
+                <option value="percent_drink">Giảm % Bia/Đồ Uống</option>
+                <option value="cash">Giảm trừ Tiền mặt (VNĐ)</option>
+            </select>
+            <input type="number" id="discountValue" class="table-input" style="display: none; width: 40%; font-size: 14px;" placeholder="Số % hoặc Tiền" onkeyup="calculateTotal()" onchange="calculateTotal()">
         </div>
 
         <div id="menu-container"></div>
@@ -119,40 +116,43 @@
         const menuData = [
             {
                 category: "Đồ Uống",
+                type: "drink", // Gắn cờ để phân loại giảm giá
                 items: [
-                    { id: 'tiger', name: 'Tiger', price: 25 }, { id: 'heineken', name: 'Heineken', price: 30 },
-                    { id: 'blanc1664', name: 'Blanc 1664', price: 30 }, { id: 'cashber', name: 'Cashber', price: 30 },
-                    { id: 'turborg', name: 'Turborg', price: 30 }, { id: 'huda', name: 'Huda', price: 25 },
-                    { id: 'sochu', name: 'Sochu', price: 110 }, { id: 'bohuc', name: 'Bò húc', price: 25 },
-                    { id: 'somersby', name: 'Somersby', price: 30 }
+                    { id: 'tiger', name: 'Tiger', price: 25, isBeer: true }, { id: 'heineken', name: 'Heineken', price: 30, isBeer: true },
+                    { id: 'blanc1664', name: 'Blanc 1664', price: 30, isBeer: true }, { id: 'cashber', name: 'Cashber', price: 30, isBeer: true },
+                    { id: 'turborg', name: 'Turborg', price: 30, isBeer: true }, { id: 'huda', name: 'Huda', price: 25, isBeer: true },
+                    { id: 'sochu', name: 'Sochu', price: 110, isBeer: false }, { id: 'bohuc', name: 'Bò húc', price: 25, isBeer: false },
+                    { id: 'somersby', name: 'Somersby', price: 30, isBeer: true }
                 ]
             },
             {
                 category: "Khô Nướng",
+                type: "food",
                 items: [
                     { id: 'khomuc', name: 'Khô mực nướng', price: 149 }, { id: 'khoduoi', name: 'Khô đuối nướng', price: 79 },
                     { id: 'khochivang', name: 'Khô chỉ vàng nướng', price: 49 }, { id: 'khocamoi', name: 'Khô cá mối nướng', price: 49 },
                     { id: 'khocabong', name: 'Khô cá bóng đường', price: 49 }, { id: 'khocabo', name: 'Khô cá bò nướng', price: 49 },
-                    { id: 'meckho', name: 'Mẹc khô', price: 199 }, { id: 'dauphong', name: 'Đậu phộng', price: 15 },
+                    { id: 'meckho', name: 'Mẹc khô', price: 199, isMec: true }, { id: 'dauphong', name: 'Đậu phộng', price: 15 },
                     { id: 'traicay', name: 'Trái cây dĩa', price: 49 }
                 ]
             },
             {
                 category: "Combo Nhậu",
+                type: "combo",
                 items: [
-                    { id: 'combo1', name: 'Combo 1 (5 Bia + Mực)', price: 249 },
-                    { id: 'combo2', name: 'Combo 2 (5 Bia + Mẹc)', price: 299 },
-                    { id: 'combo3', name: 'Combo 3 (10 Bia + Mẹc + Trái cây)', price: 469 }
+                    // Combo chứa sẵn số lượng bia và mẹc ẩn bên trong để đếm thống kê
+                    { id: 'combo1', name: 'Combo 1 (5 Bia + Mực)', price: 249, countBeer: 5, countMec: 0 },
+                    { id: 'combo2', name: 'Combo 2 (5 Bia + Mẹc)', price: 299, countBeer: 5, countMec: 1 },
+                    { id: 'combo3', name: 'Combo 3 (10 Bia + Mẹc + Trái cây)', price: 469, countBeer: 10, countMec: 1 }
                 ]
             }
         ];
 
         let order = {};
         let currentStaff = "";
-        
-        // ĐƯỜNG LINK GOOGLE WEB APP ĐÃ ĐƯỢC CHÈN SẴN
         const GOOGLE_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzGA09GSlZK-3r6zTAOPBn0215rBoTmIShyZXtWqs02I4_RxhbMnXqgkaW-DXybOrta/exec';
 
+        // --- AUTH ---
         function checkLogin() {
             let savedStaff = localStorage.getItem('quendiem_staff');
             if (savedStaff) {
@@ -163,20 +163,32 @@
                 renderMenu();
             }
         }
-
         function login() {
             let name = document.getElementById('inputStaffName').value.trim();
             if (!name) { alert("Vui lòng nhập tên nhân viên!"); return; }
             localStorage.setItem('quendiem_staff', name);
             checkLogin();
         }
-
         function logout() {
             if(confirm("Bạn muốn thoát tài khoản nhân viên này?")) {
                 localStorage.removeItem('quendiem_staff');
                 document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('posApp').style.display = 'none';
                 document.getElementById('inputStaffName').value = '';
+            }
+        }
+
+        // --- RENDER & LOGIC ---
+        function toggleDiscountInput() {
+            const type = document.getElementById('discountType').value;
+            const input = document.getElementById('discountValue');
+            if (type === 'none' || type === 'happy_hour') {
+                input.style.display = 'none';
+                input.value = '';
+            } else {
+                input.style.display = 'block';
+                if(type === 'cash') input.placeholder = 'Nhập VNĐ (Vd: 20000)';
+                else input.placeholder = 'Nhập % (Vd: 10)';
             }
         }
 
@@ -189,17 +201,13 @@
                     order[item.id] = 0;
                     html += `
                         <div class="menu-item">
-                            <div class="item-info">
-                                <div class="item-name">${item.name}</div>
-                                <div class="item-price">${item.price}K</div>
-                            </div>
+                            <div class="item-info"><div class="item-name">${item.name}</div><div class="item-price">${item.price}K</div></div>
                             <div class="quantity-control">
                                 <button class="btn-qty" onclick="changeQty('${item.id}', -1)">-</button>
                                 <input type="number" id="qty-${item.id}" class="qty-input" value="0" min="0" onchange="manualInput('${item.id}')">
                                 <button class="btn-qty" onclick="changeQty('${item.id}', 1)">+</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
             });
             container.innerHTML = html;
@@ -221,26 +229,74 @@
             calculateTotal();
         }
 
+        // --- TÍNH TOÁN (Khuyến mãi & Thống kê số lượng) ---
         function calculateTotal() {
-            let total = 0;
-            menuData.forEach(cat => { cat.items.forEach(item => { total += order[item.id] * item.price; }); });
-            let discountVND = parseInt(document.getElementById('discountAmount').value) || 0;
-            let discountK = discountVND / 1000;
-            let finalTotalK = total - discountK;
+            let totalFood = 0; 
+            let totalDrink = 0;
+            let totalK = 0;
+            
+            // Biến thống kê
+            let countTotalBeer = 0;
+            let countTotalMec = 0;
+            let countTigerForPromo = order['tiger'] || 0;
+
+            menuData.forEach(cat => {
+                cat.items.forEach(item => {
+                    let qty = order[item.id] || 0;
+                    let lineTotal = qty * item.price;
+                    totalK += lineTotal;
+
+                    // Phân bổ doanh thu để tính giảm giá %
+                    if (cat.type === 'drink') totalDrink += lineTotal;
+                    else if (cat.type === 'food') totalFood += lineTotal;
+                    // Với Combo, mặc định được tính như Food (Đồ nhậu) khi giảm giá
+                    else if (cat.type === 'combo') totalFood += lineTotal;
+
+                    // Đếm số lượng thống kê đẩy lên Sheets
+                    if (item.isBeer) countTotalBeer += qty;
+                    if (item.isMec) countTotalMec += qty;
+                    if (cat.type === 'combo') {
+                        countTotalBeer += (item.countBeer * qty);
+                        countTotalMec += (item.countMec * qty);
+                    }
+                });
+            });
+
+            // Tính Khuyến Mãi
+            let discountType = document.getElementById('discountType').value;
+            let discountVal = parseFloat(document.getElementById('discountValue').value) || 0;
+            let discountK = 0;
+
+            if (discountType === 'happy_hour') {
+                // Mua 5 tặng 1 Tiger (Nghĩa là lấy 6 tính tiền 5)
+                discountK = Math.floor(countTigerForPromo / 6) * 25; 
+            } 
+            else if (discountType === 'percent_total') { discountK = totalK * (discountVal / 100); } 
+            else if (discountType === 'percent_food') { discountK = totalFood * (discountVal / 100); } 
+            else if (discountType === 'percent_drink') { discountK = totalDrink * (discountVal / 100); } 
+            else if (discountType === 'cash') { discountK = discountVal / 1000; }
+
+            let finalTotalK = totalK - discountK;
             if(finalTotalK < 0) finalTotalK = 0;
+
             document.getElementById('total-amount').innerText = finalTotalK.toLocaleString();
-            return { totalK: total, discountK: discountK, finalTotalK: finalTotalK };
+            
+            // Trả về kèm số lượng Bia, Mẹc để dùng khi in Bill
+            return { totalK, discountK, finalTotalK, countTotalBeer, countTotalMec };
         }
 
         function clearAll() {
             if(confirm("Xóa trắng đơn hàng này?")) {
                 for (let id in order) { order[id] = 0; document.getElementById(`qty-${id}`).value = 0; }
                 document.getElementById('tableName').value = '';
-                document.getElementById('discountAmount').value = '';
+                document.getElementById('discountType').value = 'none';
+                document.getElementById('discountValue').value = '';
+                toggleDiscountInput();
                 calculateTotal();
             }
         }
 
+        // --- IN & LƯU BILL ---
         function generateBill() {
             const tableName = document.getElementById('tableName').value.trim();
             if (!tableName) { alert("Vui lòng nhập Tên bàn!"); document.getElementById('tableName').focus(); return; }
@@ -261,8 +317,7 @@
                 </div>
                 <div style="display: flex; font-weight: bold; border-bottom: 1px dashed #000; margin-bottom: 5px; padding-bottom: 5px;">
                     <div style="flex: 2;">Tên món</div><div style="flex: 1; text-align: center;">SL</div><div style="flex: 1; text-align: right;">Tiền</div>
-                </div>
-            `;
+                </div>`;
 
             menuData.forEach(cat => {
                 cat.items.forEach(item => {
@@ -275,7 +330,16 @@
             billHTML += `<div style="border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; font-weight: bold;">
                 <div class="bill-row"><span>Tạm tính:</span><span>${totalK.toLocaleString()},000đ</span></div>`;
             
-            if(discountK > 0) billHTML += `<div class="bill-row" style="color: #d9534f;"><span>Giảm giá:</span><span>- ${(discountK * 1000).toLocaleString()}đ</span></div>`;
+            if(discountK > 0) {
+                let txtGiamGia = "Giảm giá";
+                let dtype = document.getElementById('discountType').value;
+                if(dtype === 'happy_hour') txtGiamGia = "Happy Hour";
+                else if(dtype === 'percent_total') txtGiamGia = `Giảm ${document.getElementById('discountValue').value}% Bill`;
+                else if(dtype === 'percent_food') txtGiamGia = `Giảm ${document.getElementById('discountValue').value}% Thức ăn`;
+                else if(dtype === 'percent_drink') txtGiamGia = `Giảm ${document.getElementById('discountValue').value}% Đồ uống`;
+
+                billHTML += `<div class="bill-row" style="color: #d9534f;"><span>${txtGiamGia}:</span><span>- ${(discountK * 1000).toLocaleString()}đ</span></div>`;
+            }
 
             billHTML += `<div class="bill-row" style="font-size: 18px; margin-top: 5px;"><span>TỔNG CỘNG:</span><span>${finalTotalK.toLocaleString()},000đ</span></div></div>`;
             document.getElementById('bill-container').innerHTML = billHTML;
@@ -293,7 +357,7 @@
                 
                 sendToGoogleSheets();
                 closeModal();
-                clearAll(); // Reset form sau khi thanh toán xong
+                clearAll();
             });
         }
         
@@ -303,20 +367,25 @@
             menuData.forEach(cat => {
                 cat.items.forEach(item => { if (order[item.id] > 0) itemsText.push(`- ${item.name} (SL: ${order[item.id]})`); });
             });
-            const { totalK, discountK, finalTotalK } = calculateTotal();
+            const { totalK, discountK, finalTotalK, countTotalBeer, countTotalMec } = calculateTotal();
+            
             const payload = {
                 timestamp: now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN'),
                 staffName: currentStaff,
                 tableName: document.getElementById('tableName').value.trim(),
                 items: itemsText.join("\n"),
-                subTotal: totalK * 1000, discount: discountK * 1000, total: finalTotalK * 1000
+                subTotal: totalK * 1000, 
+                discount: discountK * 1000, 
+                total: finalTotalK * 1000,
+                totalBeer: countTotalBeer, // Đẩy thẳng số liệu thống kê Bia lên cột H
+                totalMec: countTotalMec    // Đẩy thẳng số liệu thống kê Mẹc lên cột I
             };
 
             fetch(GOOGLE_WEB_APP_URL, {
                 method: 'POST', mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
-            }).then(() => console.log("Gửi thành công!")).catch(err => console.error('Lỗi:', err));
+            }).then(() => console.log("Đã gửi đơn & thống kê")).catch(err => console.error('Lỗi:', err));
         }
 
         window.onload = checkLogin;
