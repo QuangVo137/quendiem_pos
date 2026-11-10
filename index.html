@@ -79,7 +79,7 @@
             <input type="text" id="tableName" class="table-input" placeholder="Tên Bàn / Số Bàn (Bắt buộc)">
         </div>
         
-        <!-- KHUNG CHỌN LOẠI KHUYẾN MÃI MỚI -->
+        <!-- KHUNG CHỌN LOẠI KHUYẾN MÃI -->
         <div class="input-group">
             <select id="discountType" class="table-input" style="font-size: 14px;" onchange="toggleDiscountInput(); calculateTotal()">
                 <option value="none">Không có khuyến mãi</option>
@@ -115,14 +115,34 @@
     <script>
         const menuData = [
             {
-                category: "Đồ Uống",
-                type: "drink", // Gắn cờ để phân loại giảm giá
+                category: "Bia & Nước Tăng Lực",
+                type: "drink",
                 items: [
                     { id: 'tiger', name: 'Tiger', price: 25, isBeer: true }, { id: 'heineken', name: 'Heineken', price: 30, isBeer: true },
                     { id: 'blanc1664', name: 'Blanc 1664', price: 30, isBeer: true }, { id: 'cashber', name: 'Cashber', price: 30, isBeer: true },
                     { id: 'turborg', name: 'Turborg', price: 30, isBeer: true }, { id: 'huda', name: 'Huda', price: 25, isBeer: true },
                     { id: 'sochu', name: 'Sochu', price: 110, isBeer: false }, { id: 'bohuc', name: 'Bò húc', price: 25, isBeer: false },
                     { id: 'somersby', name: 'Somersby', price: 30, isBeer: true }
+                ]
+            },
+            {
+                category: "Nước Ngọt & Cà Phê",
+                type: "drink",
+                items: [
+                    { id: 'cfdenda', name: 'Cà phê đen đá', price: 20, isBeer: false },
+                    { id: 'cfsuada', name: 'Cà phê sữa đá', price: 22, isBeer: false },
+                    { id: 'bacxiu', name: 'Bạc xỉu', price: 25, isBeer: false },
+                    { id: 'cfmuoi', name: 'Cà phê muối', price: 25, isBeer: false },
+                    { id: 'cfsuatuoi', name: 'Cà phê sữa tươi', price: 25, isBeer: false },
+                    { id: 'cfsuayenmach', name: 'Cà phê sữa yến mạch', price: 25, isBeer: false },
+                    { id: 'americano', name: 'Americano', price: 25, isBeer: false },
+                    { id: 'cacaoda', name: 'Cacao đá', price: 20, isBeer: false },
+                    { id: 'cacaosuatuoi', name: 'Cacao sữa tươi', price: 25, isBeer: false },
+                    { id: 'matchalatteda', name: 'Matcha latte đá', price: 30, isBeer: false },
+                    { id: 'matchadua', name: 'Matcha dừa', price: 30, isBeer: false },
+                    { id: 'matchalatteyenmach', name: 'Matcha latte yến mạch', price: 30, isBeer: false },
+                    { id: 'yogurtda', name: 'Yogurt đá', price: 25, isBeer: false },
+                    { id: 'nuoccam', name: 'Nước cam', price: 25, isBeer: false }
                 ]
             },
             {
@@ -140,7 +160,6 @@
                 category: "Combo Nhậu",
                 type: "combo",
                 items: [
-                    // Combo chứa sẵn số lượng bia và mẹc ẩn bên trong để đếm thống kê
                     { id: 'combo1', name: 'Combo 1 (5 Bia + Mực)', price: 249, countBeer: 5, countMec: 0 },
                     { id: 'combo2', name: 'Combo 2 (5 Bia + Mẹc)', price: 299, countBeer: 5, countMec: 1 },
                     { id: 'combo3', name: 'Combo 3 (10 Bia + Mẹc + Trái cây)', price: 469, countBeer: 10, countMec: 1 }
@@ -377,8 +396,8 @@
                 subTotal: totalK * 1000, 
                 discount: discountK * 1000, 
                 total: finalTotalK * 1000,
-                totalBeer: countTotalBeer, // Đẩy thẳng số liệu thống kê Bia lên cột H
-                totalMec: countTotalMec    // Đẩy thẳng số liệu thống kê Mẹc lên cột I
+                totalBeer: countTotalBeer,
+                totalMec: countTotalMec
             };
 
             fetch(GOOGLE_WEB_APP_URL, {
