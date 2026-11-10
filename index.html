@@ -298,9 +298,10 @@
             let finalTotalK = totalK - discountK;
             if(finalTotalK < 0) finalTotalK = 0;
 
-            document.getElementById('total-amount').innerText = finalTotalK.toLocaleString();
+            // Làm tròn kết quả dưới dạng số thực 1 chữ số thập phân cho giao diện Footer
+            let displayK = Math.round(finalTotalK * 10) / 10;
+            document.getElementById('total-amount').innerText = displayK.toString().replace('.', ',');
             
-            // Trả về kèm số lượng Bia, Mẹc để dùng khi in Bill
             return { totalK, discountK, finalTotalK, countTotalBeer, countTotalMec };
         }
 
@@ -326,6 +327,11 @@
             const now = new Date();
             const timeString = now.toLocaleTimeString('vi-VN') + ' ' + now.toLocaleDateString('vi-VN');
 
+            // CHUYỂN ĐỔI SANG VNĐ CHUẨN ĐỂ HIỂN THỊ
+            const totalVND = Math.round(totalK * 1000);
+            const discountVND = Math.round(discountK * 1000);
+            const finalTotalVND = Math.round(finalTotalK * 1000);
+
             let billHTML = `
                 <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
                     <h2 style="font-family: 'Brush Script MT', cursive; font-size: 24px;">Quên Đi Em</h2>
@@ -341,15 +347,18 @@
             menuData.forEach(cat => {
                 cat.items.forEach(item => {
                     if (order[item.id] > 0) {
-                        billHTML += `<div class="bill-row"><div style="flex: 2;">${item.name}</div><div style="flex: 1; text-align: center;">${order[item.id]}</div><div style="flex: 1; text-align: right;">${order[item.id] * item.price}K</div></div>`;
+                        let lineTotalK = order[item.id] * item.price;
+                        billHTML += `<div class="bill-row"><div style="flex: 2;">${item.name}</div><div style="flex: 1; text-align: center;">${order[item.id]}</div><div style="flex: 1; text-align: right;">${lineTotalK}K</div></div>`;
                     }
                 });
             });
 
+            // Gắn số tiền Tạm tính đã làm tròn
             billHTML += `<div style="border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; font-weight: bold;">
-                <div class="bill-row"><span>Tạm tính:</span><span>${totalK.toLocaleString()},000đ</span></div>`;
+                <div class="bill-row"><span>Tạm tính:</span><span>${totalVND.toLocaleString('vi-VN')}đ</span></div>`;
             
-            if(discountK > 0) {
+            // Khuyến mãi nếu có
+            if(discountVND > 0) {
                 let txtGiamGia = "Giảm giá";
                 let dtype = document.getElementById('discountType').value;
                 if(dtype === 'happy_hour') txtGiamGia = "Happy Hour";
@@ -357,10 +366,11 @@
                 else if(dtype === 'percent_food') txtGiamGia = `Giảm ${document.getElementById('discountValue').value}% Thức ăn`;
                 else if(dtype === 'percent_drink') txtGiamGia = `Giảm ${document.getElementById('discountValue').value}% Đồ uống`;
 
-                billHTML += `<div class="bill-row" style="color: #d9534f;"><span>${txtGiamGia}:</span><span>- ${(discountK * 1000).toLocaleString()}đ</span></div>`;
+                billHTML += `<div class="bill-row" style="color: #d9534f;"><span>${txtGiamGia}:</span><span>- ${discountVND.toLocaleString('vi-VN')}đ</span></div>`;
             }
 
-            billHTML += `<div class="bill-row" style="font-size: 18px; margin-top: 5px;"><span>TỔNG CỘNG:</span><span>${finalTotalK.toLocaleString()},000đ</span></div></div>`;
+            // Gắn số tiền Tổng cộng đã làm tròn
+            billHTML += `<div class="bill-row" style="font-size: 18px; margin-top: 5px;"><span>TỔNG CỘNG:</span><span>${finalTotalVND.toLocaleString('vi-VN')}đ</span></div></div>`;
             document.getElementById('bill-container').innerHTML = billHTML;
             document.getElementById('billModal').style.display = 'block';
         }
@@ -388,14 +398,15 @@
             });
             const { totalK, discountK, finalTotalK, countTotalBeer, countTotalMec } = calculateTotal();
             
+            // Xóa bỏ hoàn toàn số thập phân trước khi đẩy lên Google Sheets
             const payload = {
                 timestamp: now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN'),
                 staffName: currentStaff,
                 tableName: document.getElementById('tableName').value.trim(),
                 items: itemsText.join("\n"),
-                subTotal: totalK * 1000, 
-                discount: discountK * 1000, 
-                total: finalTotalK * 1000,
+                subTotal: Math.round(totalK * 1000), 
+                discount: Math.round(discountK * 1000), 
+                total: Math.round(finalTotalK * 1000),
                 totalBeer: countTotalBeer,
                 totalMec: countTotalMec
             };
